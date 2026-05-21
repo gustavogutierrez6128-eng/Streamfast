@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StreamFast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080a0f; 
+      --surface: #0e1117; 
+      --card: #131720;
+      --border: rgba(255,255,255,0.07); 
+      --accent: #e63946;
+      --accent2: #ff6b35; 
+      --gold: #ffd166;
+      --text: #f0f2f7; 
+      --muted: #6b7280; 
+      --input-bg: #1a1f2e;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: 'DM Sans', sans-serif; 
+      min-height: 100vh; 
+      overflow-x: hidden; 
+    }
+    header {
+      background: rgba(14, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem;
+      letter-spacing: 1px;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .catalog-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 25px;
+      letter-spacing: 1px;
+      border-left: 4px solid var(--accent);
+      padding-left: 15px;
+    }
+    .grid-series {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(230, 57, 70, 0.4);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+    }
+    .card-placeholder-img {
+      height: 170px;
+      background: linear-gradient(135deg, #1e2536 0%, #0f131c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    .card-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .badge {
+      background: rgba(255,255,255,0.05);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .card-desc {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .loading-msg {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">STREAMFAST</div>
+    <div style="color: var(--muted); font-size: 0.9rem;">Catálogo Sincronizado</div>
+  </header>
+
+  <div class="container">
+    <h2 class="catalog-title">Series Disponibles</h2>
+    
+    <div id="lista-series" class="grid-series">
+      <div class="loading-msg">Conectando con el servidor local...</div>
+    </div>
+  </div>
+
+  <script>
+    const emojisGeneros = {
+      'Fantasía': '⚔️',
+      'Drama': '🎭',
+      'Crimen': '🕵️‍♂️',
+      'Ciencia ficción': '🛸',
+      'Miniserie': '📺',
+      'Comedia oscura': '🖤',
+      'Comedia negra': '🕶️',
+      'Comedia': '😂'
+    };
+
+    async function cargarSeries() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Debes iniciar sesión para acceder al catálogo.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const respuesta = await fetch('/api/series', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const series = await respuesta.json();
+        
+        const contenedor = document.getElementById('lista-series');
+        contenedor.innerHTML = ''; // Limpiar el mensaje de carga
+
+        if (series.length === 0) {
+          contenedor.innerHTML = '<div class="loading-msg">No se encontraron series en la Base de Datos.</div>';
+          return;
+        }
+
+        series.forEach(serie => {
+          const emoji = emojisGeneros[serie.genero] || '🎬';
+          const tarjeta = document.createElement('div');
+          tarjeta.className = 'card';
+          tarjeta.innerHTML = `
+            <div class="card-placeholder-img">${emoji}</div>
+            <div class="card-body">
+              <h3 class="card-title">${serie.titulo}</h3>
+              <div class="card-meta">
+                <span class="badge">📅 ${serie.año_lanzamiento}</span>
+                <span class="badge">🎭 ${serie.genero}</span>
+              </div>
+              <p class="card-desc">${serie.descripcion || 'Sin descripción disponible actualmente.'}</p>
+            </div>
+          `;
+          contenedor.appendChild(tarjeta);
+        });
+
+      } catch (error) {
+        console.error('Error al mapear API:', error);
+        document.getElementById('lista-series').innerHTML = `
+          <div class="loading-msg" style="color: #e63946;">
+            ❌ No se pudo conectar a la base de datos. <br/>
+            <span style="font-size:0.9rem; color:gray;">Asegúrate de ejecutar "node server.js" en tu consola y tener XAMPP encendido.</span>
+          </div>`;
+      }
+    }
+
+    window.onload = cargarSeries;
+  </script>
+</body>
+</html>

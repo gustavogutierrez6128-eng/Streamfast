@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenido a StreamFast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a0f; 
+      --accent: #e63946;
+      --accent2: #ff6b35; 
+      --text: #f0f2f7; 
+      --muted: #9ca3af; 
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: 'DM Sans', sans-serif; 
+      min-height: 100vh; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+    .logo-container {
+      margin-bottom: 20px;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 5rem;
+      letter-spacing: 3px;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 5px;
+    }
+    .welcome-text {
+      font-size: 1.3rem;
+      color: var(--text);
+      font-weight: 300;
+      margin-bottom: 45px;
+      letter-spacing: 0.5px;
+    }
+    .btn {
+      display: inline-block;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      color: #fff;
+      padding: 16px 45px;
+      font-size: 1.15rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    }
+    .btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(230, 57, 70, 0.5);
+    }
+    .register-box {
+      margin-top: 30px;
+      font-size: 1rem;
+      color: var(--muted);
+    }
+    .register-box a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 5px;
+      transition: color 0.3s;
+    }
+    .register-box a:hover {
+      color: var(--accent2);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo-container">
+    <div class="logo">STREAMFAST</div>
+  </div>
+  
+  <div class="welcome-text">Bienvenido a la mejor plataforma de streaming.</div>
+
+  <a href="login.html" class="btn">Iniciar Sesión</a>
+
+  <div class="register-box">
+    ¿No estás registrado? <a href="registro.html">Haz clic aquí</a>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Catálogo StreamFast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080a0f; 
+      --surface: #0e1117; 
+      --card: #131720;
+      --border: rgba(255,255,255,0.07); 
+      --accent: #e63946;
+      --accent2: #ff6b35; 
+      --gold: #ffd166;
+      --text: #f0f2f7; 
+      --muted: #6b7280; 
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: 'DM Sans', sans-serif; 
+      min-height: 100vh; 
+      overflow-x: hidden; 
+    }
+    header {
+      background: rgba(14, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem;
+      letter-spacing: 1px;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .catalog-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 25px;
+      letter-spacing: 1px;
+      border-left: 4px solid var(--accent);
+      padding-left: 15px;
+    }
+    .grid-series {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      cursor: pointer; 
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(230, 57, 70, 0.4);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+    }
+    .card-placeholder-img {
+      height: 170px;
+      background: linear-gradient(135deg, #1e2536 0%, #0f131c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    .card-body { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+    .card-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; color: #fff; }
+    .card-meta { display: flex; gap: 12px; font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; }
+    .badge { background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); }
+    .card-desc { font-size: 0.9rem; color: #9ca3af; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .modal-overlay {
+      display: none; 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      z-index: 1000; justify-content: center; align-items: center;
+      padding: 20px;
+    }
+    .modal-content {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; width: 100%; max-width: 800px;
+      max-height: 90vh; overflow-y: auto; position: relative;
+      padding: 35px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    .close-btn {
+      position: absolute; top: 15px; right: 20px; font-size: 1.8rem;
+      color: var(--muted); cursor: pointer; background: none; border: none; transition: 0.3s;
+    }
+    .close-btn:hover { color: var(--accent); transform: scale(1.1); }
+    .modal-header { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 25px; }
+    .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: #fff; margin-bottom: 10px; letter-spacing: 1px; }
+    .seccion-titulo { font-weight: 600; font-size: 1.3rem; margin: 30px 0 15px 0; color: var(--gold); border-left: 3px solid var(--gold); padding-left: 10px; }
+    
+    /* Listas compactas para cuando haya muchos datos */
+    .lista-actores { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+    .actor-item { background: var(--surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.95rem;}
+    .actor-item strong { color: #fff; }
+    .personaje { color: var(--accent2); font-size: 0.8rem; display: block; margin-top: 2px; }
+    
+    .lista-episodios { display: grid; gap: 8px; }
+    .episodio-item { background: var(--surface); padding: 12px 15px; border-radius: 6px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .episodio-info h4 { color: #fff; font-size: 1.05rem; margin-bottom: 3px; }
+    .episodio-meta { font-size: 0.8rem; color: var(--muted); }
+    .episodio-duracion { font-weight: bold; color: var(--accent); background: rgba(230, 57, 70, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">STREAMFAST</div>
+    <div style="color: var(--muted); font-size: 0.9rem;">Catálogo Sincronizado</div>
+  </header>
+
+  <div class="container">
+    <h2 class="catalog-title">Series Disponibles</h2>
+    <div id="lista-series" class="grid-series">
+      <div style="text-align:center; padding: 40px; color: gray;">Conectando con el servidor...</div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="close-btn" onclick="cerrarModal()">✖</button>
+      <div id="modal-body">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const emojisGeneros = {
+      'Fantasía': '⚔️', 'Drama': '🎭', 'Crimen': '🕵️‍♂️', 'Ciencia ficción': '🛸',
+      'Miniserie': '📺', 'Comedia oscura': '🖤', 'Comedia negra': '🕶️', 'Comedia': '😂'
+    };
+
+    async function cargarSeries() {
+      try {
+        const respuesta = await fetch('/api/series');
+        const series = await respuesta.json();
+        
+        const contenedor = document.getElementById('lista-series');
+        contenedor.innerHTML = '';
+
+        if (series.length === 0) {
+          contenedor.innerHTML = '<div style="color:gray;">No se encontraron series.</div>';
+          return;
+        }
+
+        series.forEach(serie => {
+          const emoji = emojisGeneros[serie.genero] || '🎬';
+          const tarjeta = document.createElement('div');
+          tarjeta.className = 'card';
+          tarjeta.onclick = () => abrirModal(serie.serie_id); 
+          
+          tarjeta.innerHTML = `
+            <div class="card-placeholder-img">${emoji}</div>
+            <div class="card-body">
+              <h3 class="card-title">${serie.titulo}</h3>
+              <div class="card-meta">
+                <span class="badge">📅 ${serie.año_lanzamiento}</span>
+                <span class="badge">🎭 ${serie.genero}</span>
+              </div>
+              <p class="card-desc">${serie.descripcion || 'Sin descripción.'}</p>
+            </div>
+          `;
+          contenedor.appendChild(tarjeta);
+        });
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('lista-series').innerHTML = '<div style="color:#e63946;">❌ Error de conexión con la base de datos.</div>';
+      }
+    }
+
+    async function abrirModal(serieId) {
+      const modal = document.getElementById('modal');
+      const modalBody = document.getElementById('modal-body');
+      
+      modal.style.display = 'flex';
+      modalBody.innerHTML = '<h3 style="text-align:center; color:gray; padding:40px;">Cargando información... 🍿</h3>';
+
+      try {
+        const respuesta = await fetch(`/api/series/${serieId}`);
+        const datos = await respuesta.json();
+
+        if (!datos.ok) {
+          modalBody.innerHTML = `<h3 style="color:#e63946;">Error: ${datos.message}</h3>`;
+          return;
+        }
+
+        const { serie, actores, episodios } = datos;
+
+        let actoresHTML = '<p style="color: gray;">Sin registro de actores.</p>';
+        if (actores.length > 0) {
+          // El método .map() iterará sobre TODOS los actores recibidos de la base de datos
+          actoresHTML = `<div class="lista-actores">` + actores.map(a => `
+            <div class="actor-item">
+              <strong>${a.nombre}</strong>
+              <span class="personaje">🎭 ${a.personaje}</span>
+            </div>
+          `).join('') + `</div>`;
+        }
+
+        let episodiosHTML = '<p style="color: gray;">Aún no hay episodios subidos.</p>';
+        if (episodios.length > 0) {
+          // El método .map() iterará sobre TODOS los episodios recibidos de la base de datos
+          episodiosHTML = `<div class="lista-episodios">` + episodios.map(e => `
+            <div class="episodio-item">
+              <div class="episodio-info">
+                <h4>Ep. ${e.episodio_id} - ${e.titulo}</h4>
+                <div class="episodio-meta">
+                  Temp ${e.temporada} • Dirigido por: ${e.director || 'Desconocido'} • ⭐ Imdb: ${e.rating_imdb || '-'}
+                </div>
+                <p style="font-size:0.85rem; color:#9ca3af; margin-top:4px; line-height: 1.4;">${e.descripcion || ''}</p>
+              </div>
+              <div class="episodio-duracion">⏱ ${e.duracion} min</div>
+            </div>
+          `).join('') + `</div>`;
+        }
+
+        modalBody.innerHTML = `
+          <div class="modal-header">
+            <h2 class="modal-title">${serie.titulo}</h2>
+            <div class="card-meta">
+              <span class="badge">📅 Año de Estreno: ${serie.año_lanzamiento}</span>
+              <span class="badge">🎭 Género: ${serie.genero}</span>
+            </div>
+            <p style="color:#f0f2f7; line-height:1.6; font-size:1.05rem; margin-top:15px;">
+              ${serie.descripcion}
+            </p>
+          </div>
+
+          <div class="seccion-titulo">Reparto Principal (${actores.length} registrados)</div>
+          ${actoresHTML}
+
+          <div class="seccion-titulo">Episodios Disponibles (${episodios.length} en total)</div>
+          ${episodiosHTML}
+        `;
+
+      } catch (error) {
+        modalBody.innerHTML = '<h3 style="color:#e63946;">Error al cargar la serie.</h3>';
+      }
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('modal');
+      if (event.target == modal) {
+        cerrarModal();
+      }
+    }
+
+    window.onload = cargarSeries;
+  </script>
+</body>
+</html>

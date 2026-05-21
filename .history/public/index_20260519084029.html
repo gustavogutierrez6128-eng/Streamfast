@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StreamFast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080a0f; --surface: #0e1117; --card: #131720;
+      --border: rgba(255,255,255,0.07); --accent: #e63946;
+      --accent2: #ff6b35; --gold: #ffd166;
+      --text: #f0f2f7; --muted: #6b7280; --input-bg: #1a1f2e;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+    .view { display:none; position:relative; z-index:1; }
+    .view.active { display:flex; }
+
+    /* ── NAV ── */
+    nav { display:flex; align-items:center; justify-content:space-between; padding:24px 60px; position:sticky; top:0; z-index:100; background:linear-gradient(to bottom,rgba(8,10,15,.95),transparent); backdrop-filter:blur(8px); }
+    .logo { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:3px; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .nav-btns { display:flex; gap:12px; }
+    .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); padding:10px 22px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.9rem; transition:all .2s; }
+    .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+    .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#fff; padding:10px 24px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:600; transition:opacity .2s,transform .2s; }
+    .btn-primary:hover { opacity:.88; transform:translateY(-1px); }
+
+    /* ── LANDING ── */
+    #view-landing { min-height:100vh; flex-direction:column; }
+    .hero { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:80px 24px; position:relative; }
+    .hero-glow { position:absolute; width:700px; height:700px; background:radial-gradient(circle,rgba(230,57,70,.18) 0%,transparent 70%); border-radius:50%; pointer-events:none; }
+    .hero-tag { display:inline-block; background:rgba(230,57,70,.15); border:1px solid rgba(230,57,70,.3); color:var(--accent); padding:6px 16px; border-radius:20px; font-size:.8rem; letter-spacing:2px; text-transform:uppercase; font-family:'Space Mono',monospace; margin-bottom:28px; }
+    .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(4rem,10vw,9rem); line-height:.9; letter-spacing:2px; margin-bottom:24px; }
+    .hero h1 span { background:linear-gradient(135deg,var(--accent),var(--accent2),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero p { color:var(--muted); font-size:1.1rem; max-width:500px; line-height:1.7; margin-bottom:44px; }
+    .hero-cta { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+    .btn-large { padding:16px 40px; font-size:1rem; font-weight:600; border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .25s; }
+    .featured-strip { padding:60px 60px 80px; background:linear-gradient(to bottom,transparent,var(--surface)); }
+    .strip-label { font-family:'Space Mono',monospace; font-size:.75rem; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:24px; }
+    .poster-row { display:flex; gap:16px; overflow:hidden; }
+    .poster { flex-shrink:0; width:140px; height:200px; border-radius:10px; overflow:hidden; position:relative; background:var(--card); border:1px solid var(--border); transition:transform .3s; cursor:default; }
+    .poster:hover { transform:scale(1.06); }
+    .poster-bg { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:3rem; }
+    .poster-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 50%); display:flex; align-items:flex-end; padding:10px; }
+    .poster-title { font-size:.7rem; font-weight:600; }
+
+    /* ── AUTH CARDS ── */
+    #view-login, #view-register, #view-plans { min-height:100vh; align-items:center; justify-content:center; padding:24px; }
+    .auth-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:48px 44px; width:100%; max-width:420px; position:relative; box-shadow:0 24px 80px rgba(0,0,0,.6); }
+    .auth-card::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:200px; height:1px; background:linear-gradient(to right,transparent,var(--accent),transparent); }
+    .auth-logo { text-align:center; font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:4px; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+    .auth-subtitle { text-align:center; color:var(--muted); font-size:.9rem; margin-bottom:36px; }
+    .form-group { margin-bottom:20px; }
+    .form-label { display:block; font-size:.8rem; font-weight:500; color:var(--muted); margin-bottom:8px; letter-spacing:.5px; }
+    .form-input { width:100%; padding:13px 16px; background:var(--input-bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:.95rem; transition:border-color .2s,box-shadow .2s; outline:none; }
+    .form-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(230,57,70,.15); }
+    .btn-full { width:100%; padding:14px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:8px; color:#fff; font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:600; cursor:pointer; transition:opacity .2s,transform .2s; margin-top:8px; }
+    .btn-full:hover { opacity:.88; transform:translateY(-1px); }
+    .btn-full:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .auth-switch { text-align:center; margin-top:24px; font-size:.88rem; color:var(--muted); }
+    .auth-switch a { color:var(--accent); cursor:pointer; }
+    .auth-switch a:hover { text-decoration:underline; }
+    .error-msg { background:rgba(230,57,70,.15); border:1px solid rgba(230,57,70,.3); color:#ff8a93; padding:10px 14px; border-radius:6px; font-size:.85rem; margin-bottom:18px; display:none; }
+
+    /* ── PLANS ── */
+    #view-plans { flex-direction:column; background:radial-gradient(ellipse at top,rgba(230,57,70,.08) 0%,transparent 60%); }
+    .plans-header { text-align:center; margin-bottom:52px; }
+    .plans-header h2 { font-family:'Bebas Neue',sans-serif; font-size:3.5rem; letter-spacing:3px; margin-bottom:12px; }
+    .plans-header p { color:var(--muted); font-size:1rem; }
+    .plans-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; max-width:920px; width:100%; }
+    .plan-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:36px 32px; position:relative; transition:transform .3s,box-shadow .3s; cursor:pointer; }
+    .plan-card:hover { transform:translateY(-6px); box-shadow:0 20px 60px rgba(0,0,0,.5); }
+    .plan-card.featured { border-color:var(--accent); box-shadow:0 0 40px rgba(230,57,70,.2); }
+    .plan-badge { position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; padding:4px 18px; border-radius:20px; font-size:.75rem; font-weight:700; letter-spacing:1px; white-space:nowrap; }
+    .plan-name { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:2px; margin-bottom:8px; }
+    .plan-price { margin-bottom:28px; }
+    .plan-price .amount { font-size:2.8rem; font-weight:700; line-height:1; }
+    .plan-price .period { color:var(--muted); font-size:.9rem; }
+    .plan-features { list-style:none; margin-bottom:32px; }
+    .plan-features li { padding:8px 0; font-size:.9rem; color:#c9cdd8; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    .plan-features li:last-child { border-bottom:none; }
+    .check { color:var(--accent); } .cross { color:var(--muted); }
+
+    /* ── CATALOG ── */
+    #view-catalog { flex-direction:column; min-height:100vh; }
+    .cat-nav { display:flex; align-items:center; justify-content:space-between; padding:20px 48px; background:rgba(8,10,15,.92); backdrop-filter:blur(12px); position:sticky; top:0; z-index:100; border-bottom:1px solid var(--border); gap:16px; flex-wrap:wrap; }
+    .cat-nav .logo { font-size:1.6rem; }
+    .cat-search { display:flex; align-items:center; gap:10px; background:var(--input-bg); border:1px solid var(--border); border-radius:8px; padding:8px 16px; flex:1; max-width:340px; }
+    .cat-search input { background:none; border:none; color:var(--text); font-family:'DM Sans',sans-serif; font-size:.9rem; outline:none; width:100%; }
+    .user-pill { display:flex; align-items:center; gap:10px; cursor:pointer; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; }
+    .cat-content { padding:40px 48px; }
+    .genre-row { margin-bottom:48px; }
+    .genre-title { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:2px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+    .genre-title::after { content:''; flex:1; height:1px; background:linear-gradient(to right,var(--border),transparent); }
+    .movies-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:16px; }
+    .movie-card { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; transition:transform .3s,box-shadow .3s; cursor:pointer; position:relative; }
+    .movie-card:hover { transform:scale(1.04) translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.7); z-index:2; }
+    .movie-thumb { height:220px; display:flex; align-items:center; justify-content:center; font-size:4rem; position:relative; background:var(--input-bg); }
+    .movie-rating { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.7); border:1px solid rgba(255,209,102,.4); color:var(--gold); padding:3px 8px; border-radius:4px; font-size:.72rem; font-family:'Space Mono',monospace; }
+    .movie-info { padding:12px; }
+    .movie-title { font-size:.85rem; font-weight:600; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .movie-meta { font-size:.72rem; color:var(--muted); display:flex; gap:8px; }
+    .movie-genre-tag { background:rgba(230,57,70,.15); color:var(--accent); padding:2px 7px; border-radius:4px; font-size:.65rem; }
+
+    /* ── MODAL ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; align-items:center; justify-content:center; padding:24px; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; max-width:560px; width:100%; padding:40px; position:relative; }
+    .modal-close { position:absolute; top:16px; right:20px; background:none; border:none; color:var(--muted); font-size:1.4rem; cursor:pointer; }
+    .modal-close:hover { color:var(--text); }
+    .modal-emoji { font-size:5rem; text-align:center; display:block; margin-bottom:20px; }
+    .modal-title { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:2px; margin-bottom:8px; }
+    .modal-meta { color:var(--muted); font-size:.85rem; margin-bottom:16px; display:flex; gap:12px; flex-wrap:wrap; }
+    .modal-desc { color:#b0b8c8; line-height:1.7; font-size:.92rem; margin-bottom:28px; }
+    .btn-play { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#fff; padding:12px 28px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:600; cursor:pointer; }
+    .btn-play:hover { opacity:.85; }
+
+    /* ── SPINNER / TOAST ── */
+    .spinner-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; gap:16px; color:var(--muted); font-size:.9rem; }
+    .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .toast { position:fixed; bottom:32px; right:32px; z-index:300; background:var(--card); border:1px solid var(--accent); color:var(--text); padding:14px 22px; border-radius:10px; font-size:.9rem; transform:translateY(80px); opacity:0; transition:all .3s; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:var(--bg); } ::-webkit-scrollbar-thumb { background:var(--accent); border-radius:3px; }
+    @media(max-width:640px){ nav{padding:20px 24px;} .featured-strip{padding:40px 24px;} .auth-card{padding:36px 28px;} .cat-nav{padding:16px 20px;} .cat-content{padding:24px 20px;} }
+  </style>
+</head>
+<body>
+
+<section id="view-landing" class="view active">
+  <nav>
+    <div class="logo">STREAMFAST</div>
+    <div class="nav-btns">
+      <button class="btn-ghost" onclick="showView('login')">Iniciar sesión</button>
+      <button class="btn-primary" onclick="showView('register')">Registrarse gratis</button>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-tag">🚀 Streaming sin límites</div>
+    <h1>TODO LO QUE<br/><span>QUIERES VER</span><br/>AQUÍ.</h1>
+    <p>Series, películas y documentales en calidad 4K. Sin interrupciones. En cualquier dispositivo.</p>
+    <div class="hero-cta">
+      <button class="btn-primary btn-large" onclick="showView('register')">Empezar gratis →</button>
+      <button class="btn-ghost btn-large" onclick="showView('login')">Ya tengo cuenta</button>
+    </div>
+  </div>
+  <div class="featured-strip">
+    <div class="strip-label">🔥 Tendencias esta semana</div>
+    <div class="poster-row" id="landingPosters"></div>
+  </div>
+</section>
+
+<section id="view-register" class="view">
+  <div class="auth-card">
+    <div class="auth-logo">STREAMFAST</div>
+    <p class="auth-subtitle">Crea tu cuenta gratuita</p>
+    <div class="error-msg" id="regError"></div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo</label>
+      <input class="form-input" id="regNombre" type="text" placeholder="Tu nombre"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input class="form-input" id="regCorreo" type="email" placeholder="correo@ejemplo.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" id="regPassword" type="password" placeholder="Mínimo 8 caracteres"/>
+    </div>
+    <button class="btn-full" id="regBtn" onclick="handleRegister()">Continuar y elegir plan →</button>
+    <p class="auth-switch">¿Ya tienes cuenta? <a onclick="showView('login')">Iniciar sesión</a></p>
+    <p class="auth-switch" style="margin-top:8px"><a onclick="showView('landing')">← Volver al inicio</a></p>
+  </div>
+</section>
+
+<section id="view-plans" class="view">
+  <div class="plans-header">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,#e63946,#ff6b35);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px;">STREAMFAST</div>
+    <h2>ELIGE TU PLAN</h2>
+    <p>Sin contratos. Cancela cuando quieras.</p>
+  </div>
+  <div class="plans-grid">
+    <div class="plan-card" onclick="selectPlan('basico')">
+      <div class="plan-name">Básico</div>
+      <div class="plan-price"><span class="amount">$99</span><span class="period"> /mes · MXN</span></div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 1 pantalla simultánea</li>
+        <li><span class="check">✓</span> Calidad HD 720p</li>
+        <li><span class="check">✓</span> Catálogo completo</li>
+        <li><span class="cross">✗</span> Sin descargas</li>
+        <li><span class="cross">✗</span> Sin 4K</li>
+      </ul>
+      <button class="btn-full">Elegir Básico</button>
+    </div>
+    <div class="plan-card featured" onclick="selectPlan('estandar')">
+      <div class="plan-badge">⭐ MÁS POPULAR</div>
+      <div class="plan-name">Estándar</div>
+      <div class="plan-price"><span class="amount">$179</span><span class="period"> /mes · MXN</span></div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 2 pantallas simultáneas</li>
+        <li><span class="check">✓</span> Calidad Full HD 1080p</li>
+        <li><span class="check">✓</span> Catálogo completo</li>
+        <li><span class="check">✓</span> 5 descargas/mes</li>
+        <li><span class="cross">✗</span> Sin 4K</li>
+      </ul>
+      <button class="btn-full">Elegir Estándar</button>
+    </div>
+    <div class="plan-card" onclick="selectPlan('premium')">
+      <div class="plan-name">Premium</div>
+      <div class="plan-price"><span class="amount" style="background:linear-gradient(135deg,#ffd166,#ff6b35);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">$279</span><span class="period"> /mes · MXN</span></div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 4 pantallas simultáneas</li>
+        <li><span class="check">✓</span> Calidad 4K Ultra HD</li>
+        <li><span class="check">✓</span> Catálogo completo</li>
+        <li><span class="check">✓</span> Descargas ilimitadas</li>
+        <li><span class="check">✓</span> Dolby Atmos + HDR</li>
+      </ul>
+      <button class="btn-full" style="background:linear-gradient(135deg,#ffd166,#ff6b35);">Elegir Premium</button>
+    </div>
+  </div>
+  <p style="margin-top:32px;color:var(--muted);font-size:.85rem;">¿Ya tienes cuenta? <a onclick="showView('login')" style="color:var(--accent);cursor:pointer;">Inicia sesión</a></p>
+</section>
+
+<section id="view-login" class="view">
+  <div class="auth-card">
+    <div class="auth-logo">STREAMFAST</div>
+    <p class="auth-subtitle">Bienvenido de vuelta</p>
+    <div class="error-msg" id="loginError"></div>
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input class="form-input" id="loginCorreo" type="email" placeholder="correo@ejemplo.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" id="loginPassword" type="password" placeholder="Tu contraseña"/>
+    </div>
+    <button class="btn-full" id="loginBtn" onclick="handleLogin()">Iniciar sesión</button>
+    <p class="auth-switch">¿No tienes cuenta? <a onclick="showView('register')">Regístrate gratis</a></p>
+    <p class="auth-switch" style="margin-top:8px"><a onclick="showView('landing')">← Volver al inicio</a></p>
+  </div>
+</section>
+
+<section id="view-catalog" class="view">
+  <nav class="cat-nav">
+    <div class="logo">STREAMFAST</div>
+    <div class="cat-search">
+      <span>🔍</span>
+      <input type="text" placeholder="Buscar títulos o géneros..." id="searchInput" oninput="filterMovies()"/>
+    </div>
+    <div class="user-pill" onclick="logout()">
+      <div class="avatar" id="userAvatar">U</div>
+      <span id="userNombre" style="font-size:.88rem;"></span>
+      <span style="color:var(--muted);font-size:.8rem;">· Salir</span>
+    </div>
+  </nav>
+  <div class="cat-content" id="catalogContent">
+    <div class="spinner-wrap"><div class="spinner"></div><span>Cargando catálogo...</span></div>
+  </div>
+</section>
+
+<div class="modal-overlay" id="movieModal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <span class="modal-emoji" id="mEmoji"></span>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-meta" id="mMeta"></div>
+    <div class="modal-desc" id="mDesc"></div>
+    <button class="btn-play" onclick="showToast('▶ Reproduciendo...')">▶ Reproducir ahora</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:3000';
+
+let currentUser  = null;
+let authToken    = null;
+let allMovies    = [];
+let pendingCorreo = null; 
+
+const DEMO_MOVIES = [
+  {id:1,titulo:'Galaxia Perdida',genero:'Ciencia ficción',anio:2023,calificacion:8.4,emoji:'🚀',descripcion:'Un astronauta viaja más allá del sistema solar y descubre una civilización milenaria que cambiará el destino de la humanidad.'},
+  {id:2,titulo:'Sombras de Tokio',genero:'Thriller',anio:2022,calificacion:7.9,emoji:'🌆',descripcion:'Un detective de Tokio investiga una serie de desapariciones que lo llevan a los secretos más oscuros de la ciudad.'},
+  {id:3,titulo:'El Último Vals',genero:'Drama',anio:2024,calificacion:8.1,emoji:'🎻',descripcion:'Una violinista de élite enfrenta la crisis de su vida cuando pierde la memoria de toda su música.'},
+  {id:4,titulo:'Código Rojo',genero:'Acción',anio:2023,calificacion:7.5,emoji:'💣',descripcion:'Un equipo de agentes de élite debe desactivar una conspiración global antes del amanecer.'},
+  {id:5,titulo:'Marea Alta',genero:'Terror',anio:2022,calificacion:7.2,emoji:'🌊',descripcion:'Un pueblo costero enfrenta algo antiguo que emerge del mar cuando la marea alcanza su máximo histórico.'},
+  {id:6,titulo:'Cuentos del Norte',genero:'Animación',anio:2024,calificacion:8.7,emoji:'🦊',descripcion:'Un zorro mágico guía a tres niños perdidos en un bosque encantado del ártico.'},
+  {id:7,titulo:'Quantum',genero:'Ciencia ficción',anio:2023,calificacion:8.0,emoji:'⚛️',descripcion:'Una física cuántica descubre la forma de duplicar objetos... y personas, con consecuencias catastróficas.'},
+  {id:8,titulo:'Noche de Sal',genero:'Drama',anio:2022,calificacion:7.6,emoji:'🌙',descripcion:'Dos extraños se cruzan en una estación de tren vacía y comparten la historia de sus vidas en una sola noche.'},
+  {id:9,titulo:'El Toro Dorado',genero:'Acción',anio:2024,calificacion:7.8,emoji:'🐂',descripcion:'Un luchador retirado vuelve al ring para salvar el negocio familiar.'},
+  {id:10,titulo:'Mentes Oscuras',genero:'Thriller',anio:2023,calificacion:8.2,emoji:'🧠',descripcion:'Un psiquiatra forense descubre que su nuevo paciente conoce detalles de crímenes no reportados.'},
+  {id:11,titulo:'Aurora',genero:'Animación',anio:2024,calificacion:9.0,emoji:'🌌',descripcion:'La aurora boreal cobra vida y lleva a una niña a un mundo paralelo donde las emociones tienen forma.'},
+  {id:12,titulo:'Fuego Interior',genero:'Drama',anio:2022,calificacion:7.4,emoji:'🔥',descripcion:'La historia de la primera bombera en un pequeño pueblo que debe probar su valor en la peor tragedia.'},
+];
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function initLandingPosters() {
+  const c = document.getElementById('landingPosters');
+  DEMO_MOVIES.slice(0,8).forEach(m => {
+    c.innerHTML += `<div class="poster"><div class="poster-bg">${m.emoji}</div><div class="poster-overlay"><span class="poster-title">${m.titulo}</span></div></div>`;
+  });
+}
+
+async function handleRegister() {
+  const nombre   = document.getElementById('regNombre').value.trim();
+  const correo   = document.getElementById('regCorreo').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const err      = document.getElementById('regError');
+  const btn      = document.getElementById('regBtn');
+
+  if (!nombre)  return showError(err, 'Por favor ingresa tu nombre.');
+  if (!correo || !correo.includes('@')) return showError(err, 'Ingresa un correo válido.');
+  if (password.length < 8) return showError(err, 'La contraseña debe tener al menos 8 caracteres.');
+  err.style.display = 'none';
+
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, correo, password })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      pendingCorreo = correo;
+      showView('plans');
+    } else {
+      showError(err, data.message || 'Error al registrar');
+    }
+  } catch (e) {
+    console.warn('Backend no disponible, modo demo:', e.message);
+    pendingCorreo = correo;
+    showView('plans');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar y elegir plan →';
+  }
+}
+
+async function selectPlan(plan) {
+  try {
+    if (pendingCorreo) {
+      await fetch(`${API_BASE}/api/select-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo: pendingCorreo, plan })
+      });
+    }
+  } catch (e) {
+    console.warn('No se pudo guardar el plan:', e.message);
+  }
+
+  const planNombres = { basico:'Básico $99', estandar:'Estándar $179', premium:'Premium $279' };
+  showToast(`✅ Plan ${planNombres[plan]} activado`);
+
+  if (pendingCorreo) {
+    const nombre = document.getElementById('regNombre').value.trim() || pendingCorreo.split('@')[0];
+    enterCatalog(nombre, pendingCorreo);
+    pendingCorreo = null;
+  }
+}
+
+async function handleLogin() {
+  const correo   = document.getElementById('loginCorreo').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err      = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
+
+  if (!correo || !correo.includes('@')) return showError(err, 'Ingresa un correo válido.');
+  if (!password) return showError(err, 'Ingresa tu contraseña.');
+  err.style.display = 'none';
+
+  btn.disabled = true;
+  btn.textContent = 'Iniciando sesión...';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo, password })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      authToken = data.token;
+      enterCatalog(data.usuario.nombre, data.usuario.correo);
+    } else {
+      showError(err, data.message || 'Credenciales incorrectas');
+    }
+  } catch (e) {
+    console.warn('Backend no disponible, modo demo:', e.message);
+    const nombre = correo.split('@')[0];
+    enterCatalog(nombre, correo);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Iniciar sesión';
+  }
+}
+
+function enterCatalog(nombre, correo) {
+  currentUser = { nombre, correo };
+  document.getElementById('userNombre').textContent = nombre;
+  document.getElementById('userAvatar').textContent  = nombre[0].toUpperCase();
+  showView('catalog');
+  loadCatalog();
+}
+
+async function loadCatalog() {
+  const content = document.getElementById('catalogContent');
+  content.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><span>Cargando catálogo desde la base de datos...</span></div>';
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/peliculas`, {
+      headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+    });
+    const data = await res.json();
+
+    if (data.ok && data.peliculas.length) {
+      allMovies = data.peliculas;
+    } else {
+      throw new Error('Sin datos');
+    }
+  } catch (e) {
+    console.warn('Usando catálogo demo:', e.message);
+    allMovies = DEMO_MOVIES;
+  }
+
+  renderCatalog(allMovies);
+}
+
+function renderCatalog(movies) {
+  const content = document.getElementById('catalogContent');
+  if (!movies.length) {
+    content.innerHTML = '<div class="spinner-wrap"><span>No se encontraron resultados.</span></div>';
+    return;
+  }
+  const genreIcons = {'Ciencia ficción':'🚀','Thriller':'🔍','Drama':'🎭','Acción':'💥','Terror':'👻','Animación':'✨','Fantasía':'🔮','Miniserie':'📺','Comedia oscura':'🖤','Comedia':'🍿'};
+  const genres = {};
+  movies.forEach(m => { if (!genres[m.genero]) genres[m.genero]=[]; genres[m.genero].push(m); });
+
+  let html = '';
+  Object.entries(genres).forEach(([genero, items]) => {
+    html += `<div class="genre-row">
+      <div class="genre-title">${genreIcons[genero]||'🎬'} ${genero}</div>
+      <div class="movies-grid">
+        ${items.map(m => `
+          <div class="movie-card" onclick="openMovie(${m.id})">
+            <div class="movie-thumb">${m.emoji}<div class="movie-rating">⭐ ${m.calificacion}</div></div>
+            <div class="movie-info">
+              <div class="movie-title">${m.titulo}</div>
+              <div class="movie-meta"><span>${m.anio}</span><span class="movie-genre-tag">${m.genero}</span></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  content.innerHTML = html;
+}
+
+function filterMovies() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allMovies.filter(m =>
+    m.titulo.toLowerCase().includes(q) || m.genero.toLowerCase().includes(q)
+  );
+  renderCatalog(filtered);
+}
+
+function openMovie(id) {
+  const m = allMovies.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('mEmoji').textContent  = m.emoji;
+  document.getElementById('mTitle').textContent  = m.titulo;
+  document.getElementById('mMeta').innerHTML     = `<span>📅 ${m.anio}</span><span>🎭 ${m.genero}</span><span>⭐ ${m.calificacion}/10</span>`;
+  document.getElementById('mDesc').textContent   = m.descripcion;
+  document.getElementById('movieModal').classList.add('open');
+}
+function closeModal(e) {
+  if (!e || e.target===document.getElementById('movieModal') || e.currentTarget.tagName==='BUTTON')
+    document.getElementById('movieModal').classList.remove('open');
+}
+
+function logout() {
+  currentUser = null; authToken = null; allMovies = [];
+  showView('landing');
+  showToast('👋 Sesión cerrada');
+}
+
+function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+initLandingPosters();
+</script>
+</body>
+</html>
