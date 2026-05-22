@@ -2,7 +2,6 @@ DROP DATABASE IF EXISTS Streamfast;
 CREATE DATABASE Streamfast CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE Streamfast;
 
--- ── TABLA USUARIOS ───────────────────────
 CREATE TABLE Streamfast.usuarios (
     usuarioid      INT AUTO_INCREMENT PRIMARY KEY,
     correo          VARCHAR(100),
@@ -12,15 +11,14 @@ CREATE TABLE Streamfast.usuarios (
     fecha_registro DATE
 );
 
-INSERT INTO Streamfast.usuarios (correo, nombre, fecha_registro) VALUES
-('@soyunmaricon', 'Daniel', '2026-03-17'),
-('@makunga',      'caguamon','2026-03-17'),
-('@sircoño',      'miguel', '2026-03-17'),
-('@mhm',          'marco',  '2026-03-17'),
-('@maleficio',    'angel',  '2026-03-17');
+INSERT INTO Streamfast.usuarios (correo, password_hash, nombre, fecha_registro) VALUES
+('daniel@gmail.com', '$2b$10$7E7Y66MvS6O0wU7wHlV7uOun.vV26.3Z32N1Zz3H39Z2y4X2z2z2z', 'Daniel', '2026-03-17'),
+('caguamon@gmail.com', '$2b$10$7E7Y66MvS6O0wU7wHlV7uOun.vV26.3Z32N1Zz3H39Z2y4X2z2z2z', 'caguamon','2026-03-17'),
+('miguel@gmail.com', '$2b$10$7E7Y66MvS6O0wU7wHlV7uOun.vV26.3Z32N1Zz3H39Z2y4X2z2z2z', 'miguel', '2026-03-17'),
+('marco@gmail.com', '$2b$10$7E7Y66MvS6O0wU7wHlV7uOun.vV26.3Z32N1Zz3H39Z2y4X2z2z2z', 'marco',  '2026-03-17'),
+('angel@gmail.com', '$2b$10$7E7Y66MvS6O0wU7wHlV7uOun.vV26.3Z32N1Zz3H39Z2y4X2z2z2z', 'angel',  '2026-03-17');
 
--- ── TABLA SERIES ─────────────────────────
-CREATE TABLE Streamfast.Series (
+CREATE TABLE Streamfast.series (
     serie_id        INT AUTO_INCREMENT PRIMARY KEY,
     titulo          VARCHAR(255) NOT NULL UNIQUE,
     descripcion      TEXT,
@@ -28,22 +26,19 @@ CREATE TABLE Streamfast.Series (
     genero          VARCHAR(255)
 );
 
--- ── TABLA DIRECTORES ─────────────────────
-CREATE TABLE Streamfast.Directores (
+CREATE TABLE Streamfast.directores (
     director_id  INT AUTO_INCREMENT PRIMARY KEY,
     nombre       VARCHAR(255) NOT NULL,
     nacionalidad VARCHAR(100)
 );
 
--- ── TABLA ACTORES ────────────────────────
-CREATE TABLE Streamfast.Actores (
+CREATE TABLE Streamfast.actores (
     actor_id        INT AUTO_INCREMENT PRIMARY KEY,
     nombre          VARCHAR(255) NOT NULL,
     fecha_nacimiento DATE
 );
 
--- ── TABLA EPISODIOS ──────────────────────
-CREATE TABLE Streamfast.Episodios (
+CREATE TABLE Streamfast.episodios (
     episodio_id  INT AUTO_INCREMENT PRIMARY KEY,
     serie_id     INT,
     director_id  INT NULL,
@@ -53,22 +48,20 @@ CREATE TABLE Streamfast.Episodios (
     temporada    INT,
     descripcion  TEXT,
     fecha_estreno DATE,
-    FOREIGN KEY (serie_id)    REFERENCES Streamfast.Series(serie_id)       ON DELETE CASCADE,
-    FOREIGN KEY (director_id) REFERENCES Streamfast.Directores(director_id) ON DELETE SET NULL
+    FOREIGN KEY (serie_id)    REFERENCES Streamfast.series(serie_id)       ON DELETE CASCADE,
+    FOREIGN KEY (director_id) REFERENCES Streamfast.directores(director_id) ON DELETE SET NULL
 );
 
--- ── TABLA ACTUACIONES ────────────────────
-CREATE TABLE Streamfast.Actuaciones (
+CREATE TABLE Streamfast.actuaciones (
     actor_id  INT,
     serie_id  INT,
     personaje VARCHAR(255),
     PRIMARY KEY (actor_id, serie_id),
-    FOREIGN KEY (actor_id) REFERENCES Streamfast.Actores(actor_id)  ON DELETE CASCADE,
-    FOREIGN KEY (serie_id) REFERENCES Streamfast.Series(serie_id)   ON DELETE CASCADE
+    FOREIGN KEY (actor_id) REFERENCES Streamfast.actores(actor_id)  ON DELETE CASCADE,
+    FOREIGN KEY (serie_id) REFERENCES Streamfast.series(serie_id)   ON DELETE CASCADE
 );
 
--- ── INSERTS RESTANTES ────────────────────
-INSERT INTO Streamfast.Directores (nombre, nacionalidad) VALUES
+INSERT INTO Streamfast.directores (nombre, nacionalidad) VALUES
 ('Tim Van Patten',    'Estadounidense'),
 ('Mark Mylod',        'Británico'),
 ('Craig Mazin',       'Estadounidense'),
@@ -79,7 +72,7 @@ INSERT INTO Streamfast.Directores (nombre, nacionalidad) VALUES
 ('Mike White',        'Estadounidense'),
 ('Sam Levinson',      'Estadounidense');
 
-INSERT INTO Streamfast.Series (titulo, descripcion, año_lanzamiento, genero) VALUES
+INSERT INTO Streamfast.series (titulo, descripcion, año_lanzamiento, genero) VALUES
 ('Game of Thrones',       'Nobles familias luchan por el control del Trono de Hierro.',                      2011, 'Fantasía'),
 ('The Sopranos',          'Un jefe de la mafia de Nueva Jersey busca ayuda psiquiátrica.',                   1999, 'Drama'),
 ('The Wire',              'La escena de las drogas en Baltimore vista desde los ojos de la ley.',            2002, 'Crimen'),
@@ -96,7 +89,7 @@ INSERT INTO Streamfast.Series (titulo, descripcion, año_lanzamiento, genero) VA
 ('Band of Brothers',      'Segunda Guerra Mundial.',                                                         2001, 'Miniserie'),
 ('Silicon Valley',        'Programadores en Silicon Valley.',                                                2014, 'Comedia');
 
-INSERT INTO Streamfast.Actores (nombre, fecha_nacimiento) VALUES
+INSERT INTO Streamfast.actores (nombre, fecha_nacimiento) VALUES
 ('Peter Dinklage',     '1969-06-11'),
 ('Emilia Clarke',      '1986-10-23'),
 ('James Gandolfini',   '1961-09-18'),
@@ -123,7 +116,7 @@ INSERT INTO Streamfast.Actores (nombre, fecha_nacimiento) VALUES
 ('Damian Lewis',       '1971-02-11'),
 ('Thomas Middleditch', '1982-03-10');
 
-INSERT INTO Streamfast.Actuaciones (actor_id, serie_id, personaje) VALUES
+INSERT INTO Streamfast.actuaciones (actor_id, serie_id, personaje) VALUES
 (1,  1,  'Tyrion Lannister'),
 (2,  1,  'Daenerys Targaryen'),
 (3,  2,  'Tony Soprano'),
@@ -150,7 +143,7 @@ INSERT INTO Streamfast.Actuaciones (actor_id, serie_id, personaje) VALUES
 (24, 14, 'Dick Winters'),
 (25, 15, 'Richard Hendricks');
 
-INSERT INTO Streamfast.Episodios (serie_id, director_id, titulo, duracion, rating_imdb, temporada, descripcion, fecha_estreno) VALUES
+INSERT INTO Streamfast.episodios (serie_id, director_id, titulo, duracion, rating_imdb, temporada, descripcion, fecha_estreno) VALUES
 (1, 1, 'Winter is Coming',          62, 9.0, 1, 'Ned Stark descubre una conspiración.', '2011-04-17'),
 (1, 4, 'The Rains of Castamere',     52, 9.9, 3, 'La Boda Roja.',                        '2013-06-02'),
 (1, 5, 'Battle of the Bastards',     60, 9.9, 6, 'Jon Snow vs Ramsay Bolton.',           '2016-06-19'),
