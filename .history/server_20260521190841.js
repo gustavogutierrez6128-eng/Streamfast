@@ -103,7 +103,7 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/series', async (req, res) => {
   try {
-    const [series] = await pool.query('SELECT * FROM series');
+    const [series] = await pool.query('SELECT * FROM Series');
     res.json(series);
   } catch (err) {
     console.error(err);
@@ -114,23 +114,23 @@ app.get('/api/series', async (req, res) => {
 app.get('/api/series/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [series] = await pool.query('SELECT * FROM series WHERE serie_id = ?', [id]);
+    const [series] = await pool.query('SELECT * FROM Series WHERE serie_id = ?', [id]);
     if (series.length === 0) return res.status(404).json({ ok: false, message: 'Serie no encontrada' });
 
     const serie = series[0];
 
     const [episodios] = await pool.query(`
       SELECT e.*, d.nombre AS director
-      FROM episodios e
-      LEFT JOIN directores d ON e.director_id = d.director_id
+      FROM Episodios e
+      LEFT JOIN Directores d ON e.director_id = d.director_id
       WHERE e.serie_id = ?
       ORDER BY e.temporada, e.episodio_id
     `, [id]);
 
     const [actores] = await pool.query(`
       SELECT a.nombre, ac.personaje
-      FROM actuaciones ac
-      JOIN actores a ON ac.actor_id = a.actor_id
+      FROM Actuaciones ac
+      JOIN Actores a ON ac.actor_id = a.actor_id
       WHERE ac.serie_id = ?
     `, [id]);
 
@@ -147,9 +147,9 @@ app.get('/api/buscar', async (req, res) => {
     const [series] = await pool.query(`
       SELECT s.serie_id, s.titulo, s.descripcion, s.año_lanzamiento, s.genero,
              GROUP_CONCAT(a.nombre SEPARATOR ', ') AS actores
-      FROM series s
-      LEFT JOIN actuaciones ac ON s.serie_id = ac.serie_id
-      LEFT JOIN actores a      ON ac.actor_id = a.actor_id
+      FROM Series s
+      LEFT JOIN Actuaciones ac ON s.serie_id = ac.serie_id
+      LEFT JOIN Actores a      ON ac.actor_id = a.actor_id
       WHERE s.titulo LIKE ? OR s.genero LIKE ?
       GROUP BY s.serie_id
     `, [q, q]);
